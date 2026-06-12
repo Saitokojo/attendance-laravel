@@ -1,0 +1,4 @@
+[deploy]
+healthcheckPath = "/up"
+healthcheckTimeout = 120
+startCommand = "php artisan migrate --force; php artisan db:seed --force; SERVER_NAME=:$PORT frankenphp run --config /app/Caddyfile"
