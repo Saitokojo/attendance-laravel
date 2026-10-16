@@ -12,36 +12,63 @@ QR-based employee attendance system. Admins manage offices and employees via a w
 
 ---
 
-## Local Setup
+## Local/Development Setup
 
-**Requirements:** PHP 8.2+, Composer, MySQL running (XAMPP)
+> [!NOTE]
+> You Need Docker for this.
+
+This Will Create Network Bridge For our laravel container & mysql-container to communte with each other.
+```bash
+docker network create attendance-network
+```
+First, We'll create mysql-container
+```bash
+docker run -d \
+  --name attendance-mysql \
+  --network attendance-network \
+  -e MYSQL_ROOT_PASSWORD=root123 \
+  -e MYSQL_DATABASE=attendance_db \
+  -e MYSQL_USER=user \
+  -e MYSQL_PASSWORD=user123 \
+  -p 3306:3306 \
+  -v attendance-mysql-data:/var/lib/mysql \
+  mysql:8.4
+```
+
+Then create .env file from .env.example, And Input these Value into variables.
+
+Example:
+```
+DB_CONNECTION=mysql
+DB_HOST=attendance-mysql        # mysql container name
+DB_PORT=3306
+DB_DATABASE=attendance_db       # our database name
+DB_USERNAME=user
+DB_PASSWORD=user123
+```
+cd ~/attendance-system/laravel:
+
+```
+docker build -t attendance-app
+```
+Then create container with our newly created image:
+```
+docker run -it \
+  --network attendance-network \
+  --name attendance-app \
+  -p 8000:8000 \
+  -v "$(pwd):/var/www/html" \
+  -v attendance-vendor:/var/www/html/vendor \
+  -w /var/www/html \
+  attendance-app
+```
 
 ```bash
-# 1. Install dependencies
-composer install
-npm install && npm run build
-
-# 2. Configure environment
-cp .env.example .env
+# 1. Generate key for our app-key in env
 php artisan key:generate
-```
 
-Edit `.env` and set your MySQL credentials:
-```
-DB_DATABASE=attendance_dev
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-```bash
-# 3. Create the database (if it doesn't exist)
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS attendance_dev;"
-
-# 4. Run migrations + seed (creates admin user + demo office)
+# 2. Run migrations + seed (creates admin user + demo office)
 php artisan migrate --seed
-
-# 5. Start the dev server
-php artisan serve
 ```
 
 Visit `http://localhost:8000/admin` and log in with:
